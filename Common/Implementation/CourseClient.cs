@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Text;
 	using Interface;
 	using Model;
 
@@ -16,13 +17,14 @@
 		/// Gets the course order.
 		/// </summary>
 		/// <param name="courseData">The course data.</param>
+		/// <param name="asFlatList">if set to <c>true</c> [as flat list].</param>
 		/// <returns>System.String.</returns>
-		public string GetCourseOrder(string[] courseData)
+		public string GetCourseOrder(string[] courseData, bool asFlatList)
 		{
-			throw new System.NotImplementedException();
+			return ProcessCourseData(courseData, asFlatList);
 		}
 
-		public string ProcessCourseData(string[] courseData)
+		private string ProcessCourseData(string[] courseData, bool asFlatList)
 		{
 			string retval = null;
 
@@ -36,22 +38,91 @@
 					{
 						var courseChain = BuildCourseChain(courses);
 
-						var stop = "";
+						if(courseChain != null)
+						{
+							retval = BuildOutput(courseChain, asFlatList);
+						}
+						else
+						{
+							retval = "Something went wrong and the course order could not be built";
+						}
 					}
 					catch(ArgumentException ex)
 					{
 						retval = ex.Message;
 					}
-
-					
 				}
+				else
+				{
+					retval = "Failed parsing the courses";
+				}
+			}
+			else
+			{
+				retval = "No course data provided";
 			}
 
 			return retval;
 		}
 
+		private string BuildOutput(Dictionary<string, List<Course>> courseChain, bool asFlatList)
+		{
+			string retval = null;
 
+			if(courseChain != null)
+			{
+				if(asFlatList)
+				{
 
+				}
+				else
+				{
+					var builder = new StringBuilder();
+					builder.AppendLine("Course order break down:");
+
+					foreach(var key in courseChain.Keys)
+					{
+						if(!string.IsNullOrWhiteSpace(key))
+						{
+							var tmpChain = courseChain[key];
+
+							if(tmpChain != null)
+							{
+								builder.AppendFormat("{0}: ", key);
+
+								if(tmpChain.Count > 1)
+								{
+									for(var i = tmpChain.Count - 1; i >= 0; i--)
+									{
+										var tmpCourse = tmpChain[i];
+
+										if(tmpCourse != null)
+										{
+											builder.Append(tmpCourse.Name);
+										}
+
+										if(i > 0)
+										{
+											builder.Append(", ");
+										}
+									}
+								}
+								else
+								{
+									builder.Append("No Prerequisite");
+								}
+
+								builder.AppendLine();
+							}
+						}
+					}
+
+					retval = builder.ToString();
+				}
+			}
+
+			return retval;
+		}
 
 		private Dictionary<string, List<Course>> BuildCourseChain(List<Course> courses)
 		{

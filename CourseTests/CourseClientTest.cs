@@ -2,6 +2,7 @@
 
 namespace CourseTests
 {
+	using System;
 	using System.Collections.Generic;
 	using Common.Implementation;
 
@@ -17,7 +18,7 @@ namespace CourseTests
 
 			Assert.IsNotNull(testData);
 
-			var result = client.ProcessCourseData(testData.ToArray());
+			var result = client.ProcessCourseData(testData.ToArray(), false);
 
 			Assert.AreEqual("Circular reference detected.", result);
 		}
@@ -31,28 +32,57 @@ namespace CourseTests
 
 			Assert.IsNotNull(testData);
 
-			var result = client.ProcessCourseData(testData.ToArray());
+			var result = client.ProcessCourseData(testData.ToArray(), false);
 
-			var x = "";
+			Assert.IsNotNull(result);
+
+			var startsWith = result.StartsWith("Course order break down:", StringComparison.InvariantCultureIgnoreCase);
+
+			Assert.IsTrue(startsWith);
+		}
+
+		[TestMethod]
+		public void TestNullData()
+		{
+			var client = new CourseClient();
+			
+			var result = client.ProcessCourseData(null, false);
+
+			Assert.IsNotNull(result);
+
+			Assert.AreEqual("No course data provided", result);
 		}
 
 		private List<string> CircularData()
 		{
-			return new List<string> {"Intro to Arguing on the Internet: Godwin’s Law"
-				,"Understanding Circular Logic: Intro to Arguing on the Internet"
-				,"Godwin’s Law: Understanding Circular Logic"};
+			return new List<string>
+			       {
+				       "Intro to Arguing on the Internet: Godwin’s Law"
+				       ,
+				       "Understanding Circular Logic: Intro to Arguing on the Internet"
+				       ,
+				       "Godwin’s Law: Understanding Circular Logic"
+			       };
 		}
 
 		private List<string> GoodData()
 		{
-			return new List<string> { "Introduction to Paper Airplanes: "
-				,"Advanced Throwing Techniques: Introduction to Paper Airplanes"
-				,"History of Cubicle Siege Engines: Rubber Band Catapults 101"
-				,"Advanced Office Warfare: History of Cubicle Siege Engines"
-				,"Rubber Band Catapults 101: "
-				,"Paper Jet Engines: Introduction to Paper Airplanes"
-		};
+			return new List<string>
+			       {
+				       "Introduction to Paper Airplanes: "
+				       ,
+				       "Advanced Throwing Techniques: Introduction to Paper Airplanes"
+				       ,
+				       "History of Cubicle Siege Engines: Rubber Band Catapults 101"
+				       ,
+				       "Advanced Office Warfare: History of Cubicle Siege Engines"
+				       ,
+				       "Rubber Band Catapults 101: "
+				       ,
+				       "Paper Jet Engines: Introduction to Paper Airplanes"
+			       };
 
-	}
+		}
+
 	}
 }
