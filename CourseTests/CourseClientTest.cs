@@ -18,7 +18,7 @@ namespace CourseTests
 
 			Assert.IsNotNull(testData);
 
-			var result = client.ProcessCourseData(testData.ToArray(), false);
+			var result = client.GetCourseOrder(testData.ToArray(), false);
 
 			Assert.AreEqual("Circular reference detected.", result);
 		}
@@ -32,7 +32,7 @@ namespace CourseTests
 
 			Assert.IsNotNull(testData);
 
-			var result = client.ProcessCourseData(testData.ToArray(), false);
+			var result = client.GetCourseOrder(testData.ToArray(), false);
 
 			Assert.IsNotNull(result);
 
@@ -46,7 +46,7 @@ namespace CourseTests
 		{
 			var client = new CourseClient();
 			
-			var result = client.ProcessCourseData(null, false);
+			var result = client.GetCourseOrder(null, false);
 
 			Assert.IsNotNull(result);
 
