@@ -20,7 +20,15 @@ namespace CourseTests
 
 			var result = client.GetCourseOrder(testData.ToArray(), false);
 
+			Assert.IsNotNull(result);
+
 			Assert.AreEqual("Circular reference detected.", result);
+
+			var flat = client.GetCourseOrder(testData.ToArray(), true);
+
+			Assert.IsNotNull(flat);
+
+			Assert.AreEqual("Circular reference detected.", flat);
 		}
 
 		[TestMethod]
@@ -39,6 +47,16 @@ namespace CourseTests
 			var startsWith = result.StartsWith("Course order break down:", StringComparison.InvariantCultureIgnoreCase);
 
 			Assert.IsTrue(startsWith);
+
+			var flat = client.GetCourseOrder(testData.ToArray(), true);
+
+			Assert.IsNotNull(flat);
+
+			Assert.AreEqual("Introduction to Paper Airplanes, Advanced Throwing Techniques, Paper Jet Engines, Rubber Band Catapults 101, History of Cubicle Siege Engines, Advanced Office Warfare", flat);
+
+
+
+
 		}
 
 		[TestMethod]
@@ -51,7 +69,35 @@ namespace CourseTests
 			Assert.IsNotNull(result);
 
 			Assert.AreEqual("No course data provided", result);
+
+			var flat = client.GetCourseOrder(null, true);
+
+			Assert.IsNotNull(flat);
+
+			Assert.AreEqual("No course data provided", flat);
 		}
+
+		[TestMethod]
+		public void TestOwnPrerequisiteData()
+		{
+			var client = new CourseClient();
+
+			var testData = CircularData();
+
+			Assert.IsNotNull(testData);
+
+			var result = client.GetCourseOrder(testData.ToArray(), false);
+
+			Assert.AreEqual("Circular reference detected.", result);
+
+			var flat = client.GetCourseOrder(testData.ToArray(), true);
+
+			Assert.IsNotNull(flat);
+
+			Assert.AreEqual("Circular reference detected.", flat);
+
+		}
+
 
 		private List<string> CircularData()
 		{
@@ -81,6 +127,15 @@ namespace CourseTests
 				       ,
 				       "Paper Jet Engines: Introduction to Paper Airplanes"
 			       };
+
+		}
+
+		private List<string> OwnPrerequisiteData()
+		{
+			return new List<string>
+				  {
+					  "Introduction to Paper Airplanes: Introduction to Paper Airplanes"
+				  };
 
 		}
 

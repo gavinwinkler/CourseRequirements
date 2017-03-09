@@ -36,15 +36,20 @@
 				{
 					try
 					{
+						//call to the course chain first even if it is a flat display as this detects for circular references
 						var courseChain = BuildCourseChain(courses);
 
-						if(courseChain != null)
+
+
+						if (asFlatList)
 						{
-							retval = BuildOutput(courseChain, asFlatList);
+							var orderList = BuildCourseOrder(courses);
+
+							retval = orderList?.Count > 0 ? FlatFormat(orderList) : "Something went wrong and the course prerequisite list could not be built";
 						}
 						else
 						{
-							retval = "Something went wrong and the course order could not be built";
+							retval = courseChain != null ? BreakDownFormat(courseChain) : "Something went wrong and the course chain could not be built";
 						}
 					}
 					catch(ArgumentException ex)
@@ -65,88 +70,90 @@
 			return retval;
 		}
 
-		private string BuildOutput(Dictionary<string, List<Course>> courseChain, bool asFlatList)
+		private string FlatFormat(List<Course> orderedList)
 		{
 			string retval = null;
 
-			if(courseChain != null)
+			if (orderedList?.Count > 0)
 			{
-				if(asFlatList)
-				{
+				var builder = new StringBuilder();
 
-				}
-				else
+				for(var i = 0; i < orderedList.Count; i++)
 				{
-					var builder = new StringBuilder();
-					builder.AppendLine("Course order break down:");
+					var tmpCourse = orderedList[i];
 
-					foreach(var key in courseChain.Keys)
+					if(tmpCourse != null)
 					{
-						if(!string.IsNullOrWhiteSpace(key))
+						builder.Append(tmpCourse.Name);
+
+						if(i < orderedList.Count - 1)
 						{
-							var tmpChain = courseChain[key];
-
-							if(tmpChain != null)
-							{
-								builder.AppendFormat("{0}: ", key);
-
-								if(tmpChain.Count > 1)
-								{
-									for(var i = tmpChain.Count - 1; i >= 0; i--)
-									{
-										var tmpCourse = tmpChain[i];
-
-										if(tmpCourse != null)
-										{
-											builder.Append(tmpCourse.Name);
-										}
-
-										if(i > 0)
-										{
-											builder.Append(", ");
-										}
-									}
-								}
-								else
-								{
-									builder.Append("No Prerequisite");
-								}
-
-								builder.AppendLine();
-							}
+							builder.Append(", ");
 						}
 					}
-
-					retval = builder.ToString();
 				}
+
+				retval = builder.ToString();
+			}
+			else
+			{
+				retval = "Ordered list cannot be empty";
 			}
 
 			return retval;
 		}
 
-		private Dictionary<string, List<Course>> BuildCourseChain(List<Course> courses)
+		private string BreakDownFormat(Dictionary<string, List<Course>> courseChain)
 		{
-			Dictionary<string, List<Course>> retval = null;
+			string retval = null;
 
-			if(courses != null)
+			if(courseChain != null)
 			{
-				retval = new Dictionary<string, List<Course>>();
+				var builder = new StringBuilder();
+				builder.AppendLine("Course order break down:");
 
-				foreach(var course in courses)
+				foreach(var key in courseChain.Keys)
 				{
-					if(course != null
-					   && !string.IsNullOrWhiteSpace(course.Name))
+					if(!string.IsNullOrWhiteSpace(key))
 					{
-						if(retval.ContainsKey(course.Name))
+						var tmpChain = courseChain[key];
+
+						if(tmpChain != null)
 						{
-							throw new ArgumentException("Duplicate courses are not allowed.");
+							builder.AppendFormat("{0}: ", key);
+
+							if(tmpChain.Count > 1)
+							{
+								for(var i = tmpChain.Count - 1; i >= 0; i--)
+								{
+									var tmpCourse = tmpChain[i];
+
+									if(tmpCourse != null)
+									{
+										builder.Append(tmpCourse.Name);
+									}
+
+									if(i > 0)
+									{
+										builder.Append(", ");
+									}
+								}
+							}
+							else
+							{
+								builder.Append("No Prerequisite");
+							}
+
+							builder.AppendLine();
 						}
-
-						var toPopulate = new List<Course>();
-
-						retval.Add(course.Name, BuildPrerequisiteChain(course, courses, toPopulate));
 					}
 				}
+
+				retval = builder.ToString();
+			}
+			else
+			{
+				retval = "Course chain cannot be empty";
 			}
 
 			return retval;
@@ -194,7 +201,70 @@
 			return retval;
 		}
 
-		private List<Course> BuildPrerequisiteChain(Course course, List<Course> allCourses, List<Course> toPopulate  )
+		private Dictionary<string, List<Course>> BuildCourseChain(List<Course> courses)
+		{
+			Dictionary<string, List<Course>> retval = null;
+
+			if (courses != null)
+			{
+				retval = new Dictionary<string, List<Course>>();
+
+				foreach (var course in courses)
+				{
+					if (!string.IsNullOrWhiteSpace(course?.Name))
+					{
+						if (retval.ContainsKey(course.Name))
+						{
+							throw new ArgumentException("Duplicate courses are not allowed.");
+						}
+
+						var chain = new List<Course>();
+
+						BuildCoursePrerequisiteList(course, courses, chain);
+
+						if(chain != null)
+						{
+							retval.Add(course.Name, chain);
+						}
+					}
+				}
+			}
+
+			return retval;
+		}
+
+		private List<Course> BuildCourseOrder(List<Course> courses)
+		{
+			var retval = new List<Course>();
+
+			var noPrerequisite = courses?.Where(x => string.IsNullOrWhiteSpace(x.PrerequisiteName)).ToList();
+
+			if(noPrerequisite?.Count > 0)
+			{
+				foreach(var course in noPrerequisite)
+				{
+					if(!string.IsNullOrWhiteSpace(course?.Name))
+					{
+						var ordered = new List<Course>();
+
+						BuildCourseListWithThisPrerequisite(course, courses, ordered);
+
+						if(ordered != null)
+						{
+							retval.AddRange(ordered);
+						}
+					}
+				}
+			}
+			else
+			{
+				
+			}
+
+			return retval;
+		}
+
+		private void BuildCourseListWithThisPrerequisite(Course course, List<Course> allCourses, List<Course> toPopulate)
 		{
 			if(course != null
 			   && allCourses != null
@@ -205,33 +275,52 @@
 
 				if(duplicate != null)
 				{
+					throw new ArgumentException("Duplicate entries not allowed.");
+				}
+
+				toPopulate.Add(course);
+				
+				var prerequisiteList = allCourses.Where(x => x.PrerequisiteName == course.Name);
+
+				if(prerequisiteList != null)
+				{
+					foreach(var prerequisite in prerequisiteList)
+					{
+						if(prerequisite != null)
+						{
+							BuildCourseListWithThisPrerequisite(prerequisite, allCourses, toPopulate);
+						}
+					}
+				}
+			}
+		}
+
+		private void BuildCoursePrerequisiteList(Course course, List<Course> allCourses, List<Course> toPopulate)
+		{
+			if (course != null
+			   && allCourses != null
+			   && toPopulate != null
+			   && !string.IsNullOrWhiteSpace(course.Name))
+			{
+				var duplicate = toPopulate.FirstOrDefault(x => x.Name == course.Name);
+
+				if (duplicate != null)
+				{
 					throw new ArgumentException("Circular reference detected.");
 				}
 
 				toPopulate.Add(course);
 
-				if(!string.IsNullOrWhiteSpace(course.PrerequisiteName))
+				if (!string.IsNullOrWhiteSpace(course.PrerequisiteName))
 				{
-					if(course.Name == course.PrerequisiteName)
-					{
-						throw new ArgumentException("A course cannot be its own prerequisite.");
-					}
-
 					var prerequisite = allCourses.FirstOrDefault(x => x.Name == course.PrerequisiteName);
 
-					if(prerequisite != null)
+					if (prerequisite != null)
 					{
-						var tmpChain = BuildPrerequisiteChain(prerequisite, allCourses, toPopulate);
-
-						//if(tmpChain != null)
-						//{
-						//	toPopulate.AddRange(tmpChain);
-						//}
+						BuildCoursePrerequisiteList(prerequisite, allCourses, toPopulate);
 					}
 				}
 			}
-
-			return toPopulate;
 		}
 	}
 }
