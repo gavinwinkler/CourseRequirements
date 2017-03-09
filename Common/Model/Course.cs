@@ -19,9 +19,9 @@
 		public string Name { get; set; }
 
 		/// <summary>
-		/// Gets or sets the prerequisite.
+		/// Gets or sets the prerequisite name.
 		/// </summary>
 		/// <value>The prerequisite.</value>
-		public Course Prerequisite { get; set; }
+		public string PrerequisiteName { get; set; }
 	}
 }

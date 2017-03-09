@@ -4,3 +4,6 @@
 
 *.suo
 /Common/obj/Debug
+/Common/bin/Debug
+/CourseTests/bin/Debug
+/CourseTests/obj/Debug
